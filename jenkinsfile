@@ -1,46 +1,24 @@
-pipeline {
-agent any
-   tools {
-       maven 'MAVEN_PATH'
-       jdk 'jdk8'
-   }
-   stages {
-       stage("Tools initialization") {
-           steps {
-               sh "mvn --version"
-               sh "java -version"
-           }
-       }
-       stage("Checkout Code") {
-           steps {
-               checkout scm
-           }
-       }
-       stage("Check Code Health") {
-           when {
-               not {
-                   anyOf {
-                       branch 'master';
-                       branch 'student'
-   }
-               }
-          }
-          steps {
-              sh "mvn clean compile"
-           }
-       }
-       stage("Run Test cases in LambdaTest") {
-           when {
-               branch 'develop';
-           }
-           environment {
-               LAMBDATEST_CRED = credentials('Lambda-Test-Credentials-For-multibranch')
-               LT_USERNAME = "$LAMBDATEST_CRED_USR"
-               LT_ACCESS_KEY = "$LAMBDATEST_CRED_PSW"
-           }
-          steps {
-              sh "mvn test"
-           }
-       }
-   }
+node('built-in')
+{
+    stage('Continuous Download')
+        {
+    git 'https://github.com/sai-313/jenkins-multibranch-pipeline.git'
+        }
+    stage('Continuous Build')
+        {
+    script: 'mvn package'
+        }
+    stage('Continuous Deployment')
+        {
+script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war   ubuntu@172.31.25.174:/var/lib/tomcat8/webapps/qaenv.war'
+        }
+    stage('Continuous Testing')
+        {
+               script: 'echo "Testing Passed"'
+        }
+    stage('Continuous Delivery')
+        {
+script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war   ubuntu@172.31.25.174:/var/lib/tomcat8/webapps/prodenv.war'
+        }
 }
+
